@@ -26,6 +26,9 @@ export function initNameModal(addGlossaryTerm) {
             if (nameVp && popupVi) nameVp.value = popupVi.value;
             if (nameHv && popupHv) nameHv.value = popupHv.value;
             if (nameVi) nameVi.value = '';
+            
+            // Trigger fetch for English
+            if (nameZh) updateNameModalFields(nameZh.value.trim());
         });
     }
 

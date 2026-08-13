@@ -40,12 +40,12 @@ export function initDictionaryPopup(translateBtn, addGlossaryTerm) {
         if(popupHv) popupHv.value = hvResult;
         if(popupHvCap) popupHvCap.value = hvResult.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-        // Google Translate
+        // Google Translate (Tiếng Anh)
         const popupGg = document.getElementById('popup-gg');
         if (popupGg) {
             popupGg.value = "Đang dịch...";
             try {
-                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=vi&dt=t&q=${encodeURIComponent(zhText)}`;
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=en&dt=t&q=${encodeURIComponent(zhText)}`;
                 fetch(url)
                     .then(res => res.json())
                     .then(data => {
