@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiên Dịch - Novel Translator</title>
+    <link rel="stylesheet" href="css/style.css?v=11">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="logo">
+                <i class="fa-solid fa-dragon"></i>
+                <h1>Tiên Dịch</h1>
+            </div>
+            <div class="controls">
+                <div class="reader-controls" style="display: flex; gap: 5px; margin-right: 15px; border-right: 1px solid var(--border); padding-right: 15px;">
+                    <button id="btn-font-dec" class="icon-btn" title="Giảm cỡ chữ"><i class="fa-solid fa-a" style="font-size: 0.8em"></i>-</button>
+                    <button id="btn-font-inc" class="icon-btn" title="Tăng cỡ chữ"><i class="fa-solid fa-a"></i>+</button>
+                    <button id="btn-sync-scroll" class="icon-btn active" title="Cuộn đồng bộ" style="color: var(--accent-color)"><i class="fa-solid fa-link"></i></button>
+                </div>
+                <button id="theme-toggle" class="icon-btn" title="Chuyển đổi Sáng/Tối">
+                    <i class="fa-solid fa-sun"></i>
+                </button>
+                <button id="settings-toggle" class="icon-btn" title="Cài đặt & Từ điển">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content (Split Screen) -->
+        <main class="split-container">
+            <!-- Left Column: Source -->
+            <section class="pane source-pane">
+                <div class="pane-header">
+                    <h2>Bản gốc (Trung)</h2>
+                    <div class="actions">
+                        <input type="text" id="fanqie-url" placeholder="Dán link Fanqie, 69shuba, UUkanshu..." class="url-input" />
+                        <button id="fetch-btn" class="icon-btn primary-btn" title="Cào truyện">
+                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                        </button>
+                        <button id="translate-btn" class="primary-btn">
+                            <i class="fa-solid fa-language"></i> Dịch
+                        </button>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div id="source-text" class="translation-output" contenteditable="true" placeholder="Dán văn bản tiếng Trung hoặc link truyện bất kỳ vào ô trên..."></div>
+                </div>
+            </section>
+
+            <!-- Middle Column: VietPhrase (Offline) -->
+            <section class="pane vp-pane">
+                <div class="pane-header">
+                    <h2>VietPhrase (Thô)</h2>
+                    <div class="actions">
+                        <span id="vp-status" class="status-badge loading"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải từ điển...</span>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div id="vp-text" class="translation-output" contenteditable="true" placeholder="Bản dịch thô sẽ tự động hiện ở đây khi có từ điển..."></div>
+                </div>
+            </section>
+
+            <!-- Right Column: Translation (AI/API) -->
+            <section class="pane target-pane">
+                <div class="pane-header">
+                    <h2>Bản dịch (Mượt)</h2>
+                    <div class="actions">
+                        <button id="copy-btn" class="icon-btn" title="Copy bản dịch"><i class="fa-regular fa-copy"></i></button>
+                        <button id="clear-btn" class="icon-btn" title="Xóa tất cả"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div id="target-text" class="translation-output" contenteditable="true" placeholder="Kết quả AI/API sẽ hiện ở đây..."></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Cài đặt & Từ Điển</h2>
+                <button id="close-modal" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="api-settings">Cấu hình API</button>
+                    <button class="tab-btn" data-tab="glossary-settings">Từ Điển (Glossary)</button>
+                </div>
+
+                <!-- API Settings -->
+                <div id="api-settings" class="tab-content active">
+                    <div class="form-group">
+                        <label for="provider-select">Nguồn dịch:</label>
+                        <select id="provider-select">
+                            <option value="gemini">Google Gemini (AI)</option>
+                            <option value="openai">OpenAI (ChatGPT)</option>
+                            <option value="claude">Claude API (Anthropic)</option>
+                            <option value="deepseek">DeepSeek API</option>
+                            <option value="custom_openai">Custom API (Local AI / Sakura LLM)</option>
+                            <option value="google">Google Translate (Free)</option>
+                            <option value="deeplx">DeepLX (Free - Dịch sang Tiếng Anh)</option>
+                            <option value="mymemory">MyMemory / Bing (Free - Giới hạn)</option>
+                            <option value="deepl">DeepL API (Cần Key)</option>
+                            <option value="caiyun">Caiyun (Thái Vân - Cần Key)</option>
+                            <option value="baidu">Baidu (Bá Độ - Cần Key)</option>
+                            <option value="tencent">Tencent (TranSmart - Cần Key)</option>
+                        </select>
+                    </div>
+                    <div class="form-group hidden" id="api-base-url-group">
+                        <label for="api-base-url">API Base URL (Dành cho Custom/Local API):</label>
+                        <input type="text" id="api-base-url" placeholder="VD: http://127.0.0.1:8080/v1">
+                    </div>
+                    <div class="form-group" id="api-key-group">
+                        <label for="api-key">API Key:</label>
+                        <input type="password" id="api-key" placeholder="Nhập API Key của bạn...">
+                        <small>API Key được lưu cục bộ trên trình duyệt, không gửi đi đâu khác ngoài server dịch.</small>
+                    </div>
+                </div>
+
+                <!-- Glossary Settings -->
+                <div id="glossary-settings" class="tab-content">
+                    <div class="raw-dict-toolbar" style="display: flex; gap: 10px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px;">
+                        <button id="raw-save-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Lưu lại</button>
+                        <button id="raw-run-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Chạy</button>
+                        <button id="raw-clear-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Xóa hết</button>
+                        <button id="raw-export-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Tải name</button>
+                        <button id="raw-import-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Upload</button>
+                        <input type="file" id="raw-file-input" accept=".txt" style="display: none;">
+                    </div>
+                    <textarea id="raw-dict-textarea" spellcheck="false" placeholder="Nhập mỗi từ một dòng theo định dạng: TiếngTrung=TiếngViệt&#10;VD: 韩立=Hàn Lập" style="width: 100%; height: 300px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--glass-border); padding: 10px; border-radius: 4px; font-family: monospace; resize: vertical;"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Đang luyện đan (dịch)...</p>
+    </div>
+
+    <!-- Selection Popup Menu (SangTacViet Clone) -->
+    <div id="selection-popup" class="selection-popup hidden stv-theme">
+        <div class="stv-header">
+            <button id="close-popup" class="stv-icon-btn red"><i class="fa-solid fa-circle-xmark"></i></button>
+            <button id="expand-left-btn" class="stv-text-btn"><i class="fa-solid fa-angle-left"></i> Mở rộng</button>
+            <button id="expand-right-btn" class="stv-text-btn">Mở rộng <i class="fa-solid fa-angle-right"></i></button>
+            <button class="stv-icon-btn red" onclick="document.getElementById('selection-popup').classList.add('hidden')"><i class="fa-solid fa-circle-xmark"></i></button>
+        </div>
+        <div class="stv-body">
+            <div class="stv-row">
+                <span class="stv-label" style="color: #64ffda;">py</span>
+                <input type="text" id="popup-py" class="stv-input" readonly style="color: #64ffda;">
+                <button class="stv-icon-btn" onclick="navigator.clipboard.writeText(document.getElementById('popup-py').value)"><i class="fa-regular fa-copy"></i></button>
+            </div>
+            <div class="stv-row">
+                <span class="stv-label">hv</span>
+                <input type="text" id="popup-hv" class="stv-input">
+                <button class="stv-icon-btn" onclick="document.getElementById('popup-vi').value=document.getElementById('popup-hv').value"><i class="fa-regular fa-circle-check"></i></button>
+                <button class="stv-icon-btn" onclick="document.getElementById('popup-save-btn').click()"><i class="fa-regular fa-floppy-disk"></i></button>
+            </div>
+            <div class="stv-row">
+                <span class="stv-label">HV</span>
+                <input type="text" id="popup-hv-cap" class="stv-input">
+                <button class="stv-icon-btn" onclick="document.getElementById('popup-vi').value=document.getElementById('popup-hv-cap').value"><i class="fa-regular fa-circle-check"></i></button>
+                <button class="stv-icon-btn" onclick="document.getElementById('popup-save-btn').click()"><i class="fa-regular fa-floppy-disk"></i></button>
+            </div>
+            <div class="stv-row">
+                <span class="stv-label">zw</span>
+                <input type="text" id="popup-zh" class="stv-input">
+                <button class="stv-icon-btn" onclick="navigator.clipboard.writeText(document.getElementById('popup-zh').value)"><i class="fa-regular fa-copy"></i></button>
+                <button class="stv-icon-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+            <div class="stv-row">
+                <span class="stv-label">Tr</span>
+                <input type="text" id="popup-vi" class="stv-input">
+                <button id="popup-save-btn" class="stv-text-btn-sm"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
+            </div>
+            <div class="stv-row">
+                <span class="stv-label">tc</span>
+                <input type="text" id="popup-tc" class="stv-input" placeholder="cụm từ tùy chọn">
+                <button class="stv-icon-btn" onclick="document.getElementById('popup-vi').value=document.getElementById('popup-tc').value"><i class="fa-regular fa-circle-check"></i></button>
+                <button class="stv-icon-btn" onclick="document.getElementById('popup-save-btn').click()"><i class="fa-regular fa-floppy-disk"></i></button>
+            </div>
+        </div>
+        <div class="stv-footer">
+            <button class="stv-text-btn" onclick="document.getElementById('settings-toggle').click(); document.getElementById('selection-popup').classList.add('hidden')"><i class="fa-solid fa-gear"></i> Quản lý</button>
+            <button class="stv-icon-btn" style="flex:1"><i class="fa-solid fa-play"></i></button>
+            <button id="open-name-modal-btn" class="stv-text-btn"><i class="fa-solid fa-plus"></i> Thêm name</button>
+        </div>
+    </div>
+
+    <!-- Name Modal (SangTacViet Clone) -->
+    <div id="name-modal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px; padding: 0;">
+            <div class="modal-header" style="padding: 15px 20px; border-bottom: 1px solid var(--glass-border);">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 500; color: var(--text-primary);">Thêm name/Chỉnh name</h3>
+                <button id="close-name-modal" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Tiếng Trung:</label>
+                    <input type="text" id="name-zh">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Hán Việt:</label>
+                    <input type="text" id="name-hv">
+                </div>
+                
+                <div class="name-tools-group">
+                    <button class="name-tool-btn" id="nt-dung">Dùng</button>
+                    <button class="name-tool-btn" id="nt-hoa1">Hoa chữ đầu</button>
+                    <button class="name-tool-btn" id="nt-hoa2">Hoa 2 chữ đầu</button>
+                    <button class="name-tool-btn" id="nt-thuong">Thường Chữ cuối</button>
+                    <button class="name-tool-btn" id="nt-hoaall">Hoa Toàn Bộ</button>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0; margin-top: 5px;">
+                    <label>Tiếng Anh:</label>
+                    <div class="input-with-btn">
+                        <input type="text" id="name-en">
+                        <button class="name-tool-btn" id="nt-dung-en">Dùng</button>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0; margin-top: 5px;">
+                    <label>Vietphrase:</label>
+                    <div class="input-with-btn">
+                        <input type="text" id="name-vp">
+                        <button class="name-tool-btn" id="nt-dung-vp">Dùng</button>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0; margin-top: 5px;">
+                    <label>Name trong kho:</label>
+                    <div class="input-with-btn">
+                        <input type="text" id="name-kho" placeholder="Name trong kho v.v.." style="background: rgba(0,0,0,0.1);" readonly>
+                        <button class="name-tool-btn" id="nt-dung-kho">Dùng</button>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0; margin-top: 5px;">
+                    <label>Kết quả (Tiếng Việt):</label>
+                    <input type="text" id="name-vi" style="border-color: var(--accent-color);">
+                </div>
+            </div>
+            
+            <div style="padding: 15px 20px; border-top: 1px solid var(--glass-border); display: flex; justify-content: center; gap: 15px; background: rgba(0,0,0,0.1);">
+                <button id="btn-save-name-en" class="primary-btn">Thêm Name Anh</button>
+                <button id="btn-save-name-hv" class="primary-btn">Thêm Hán Việt</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/pinyin-pro"></script>
+    <script type="module" src="js/main.js?v=11"></script>
+</body>
+</html>
