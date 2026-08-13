@@ -18,10 +18,10 @@
 - 🚀 **Tự Động Bắt Link Truyện:** Chỉ cần dán link truyện (uukanshu, 69shuba, truyenfull, fanqie, v.v.), ứng dụng sẽ tự động bóc tách đúng nội dung chương, bỏ qua toàn bộ quảng cáo, đồng thời nhận diện nút điều hướng chương trước/sau cực kỳ tiện lợi.
 - 🧠 **Bộ Não Dịch Thuật Đa Tầng:**
   1. **VietPhrase Engine:** Dịch thô siêu tốc với 7 lớp từ điển (Luật Nhân, Names, Pronouns, Vietphrase, HanViet...). Hỗ trợ popup tra cứu chéo (Thiều Chửu, Lạc Việt) ngay trên văn bản.
-  2. **Hệ Thống Dịch Đa Nguồn:** Tích hợp sẵn nhiều máy chủ dịch thuật nổi tiếng:
-     - **Nguồn Miễn Phí:** Google Translate, Microsoft Bing, Youdao, MyMemory.
-     - **Nguồn Nâng Cao (Token/VIP):** Baidu, Caiyun, DeepL.
-     - **Hỗ trợ Custom API:** Cho phép bạn tự do cấu hình kết nối tới bất kỳ máy chủ dịch nội bộ hoặc dịch vụ bên thứ ba nào mà bạn muốn (ví dụ: máy chủ Sakura, dịch vụ đám mây tư nhân...).
+  2. **Tích Hợp Sức Mạnh AI & API:** Dịch mượt mà, bay bổng như người thật với các công cụ xịn sò nhất hiện nay:
+     - **Mô hình AI hàng đầu:** Hỗ trợ kết nối trực tiếp với Google Gemini (1.5, 2.0, 2.5), OpenAI ChatGPT, Claude, và DeepSeek.
+     - **API Dịch thuật phổ biến:** Dùng thả ga với Google Translate, Microsoft Bing, Youdao, MyMemory. Hoặc xài bản nâng cao (cần API key) như Baidu, Caiyun, DeepL.
+     - **Hỗ trợ Local AI:** Thoải mái kết nối tới các server AI chạy nội bộ trên máy bạn (ví dụ: Sakura LLM, Ollama...) để dịch offline và bảo mật.
 - ⚡ **Tối Ưu Tốc Độ (Chunking & Streaming):** Hiển thị kết quả dịch theo thời gian thực (streaming) ngay khi đang tải. Ứng dụng tự động chia nhỏ các đoạn văn bản dài (chunking) để không bao giờ bị nghẽn mạng hay vượt quá giới hạn của các máy chủ miễn phí.
 - 🎨 **Giao Diện Trực Quan:** Thiết kế **Dark Mode / Light Mode** sang trọng, hiện đại. Tự động đồng bộ hóa thanh cuộn và bôi màu highlight đoạn đang đọc giữa Bản Gốc - Bản VietPhrase - Bản Dịch Hoàn Chỉnh.
 - 🛠️ **Quản Lý Từ Điển Tiện Dụng:** Bôi đen tên nhân vật mới (`Ctrl + E`) để nạp ngay vào từ điển. Lưu lịch sử đọc truyện để tiện theo dõi, mọi tùy chỉnh cá nhân đều được lưu giữ đồng bộ.
