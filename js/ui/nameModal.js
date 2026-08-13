@@ -56,6 +56,23 @@ export function initNameModal(addGlossaryTerm) {
         }
         
         if (nameHv) nameHv.value = hvResult;
+
+        // Tiếng Anh (Google Translate)
+        if (nameEn) {
+            nameEn.value = "Đang dịch...";
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=en&dt=t&q=${encodeURIComponent(zhText)}`;
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        const translated = data[0]?.map(item => item[0] || '').join('') || '';
+                        nameEn.value = translated;
+                    })
+                    .catch(() => nameEn.value = "Lỗi mạng");
+            } catch (e) {
+                nameEn.value = "Lỗi";
+            }
+        }
     }
 
     if (nameZh) {
