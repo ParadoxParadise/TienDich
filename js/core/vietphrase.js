@@ -182,6 +182,10 @@ export default {
                 else if (!trans && this.hanVietDict.has(word)) {
                     trans = this.hanVietDict.get(word);
                 }
+                // Ưu tiên 7: ChinesePhienAmWords.txt (Fallback cuối cùng)
+                else if (!trans && this.phienAmDict.has(word)) {
+                    trans = this.phienAmDict.get(word);
+                }
 
                 if (trans) {
                     // Xử lý viết hoa
