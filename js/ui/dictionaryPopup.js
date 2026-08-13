@@ -39,6 +39,24 @@ export function initDictionaryPopup(translateBtn, addGlossaryTerm) {
         
         if(popupHv) popupHv.value = hvResult;
         if(popupHvCap) popupHvCap.value = hvResult.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+        // Google Translate
+        const popupGg = document.getElementById('popup-gg');
+        if (popupGg) {
+            popupGg.value = "Đang dịch...";
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=vi&dt=t&q=${encodeURIComponent(zhText)}`;
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        const translated = data[0]?.map(item => item[0] || '').join('') || '';
+                        popupGg.value = translated;
+                    })
+                    .catch(() => popupGg.value = "Lỗi mạng");
+            } catch (e) {
+                popupGg.value = "Lỗi";
+            }
+        }
     }
 
     function hidePopup() {
@@ -178,8 +196,7 @@ export function initDictionaryPopup(translateBtn, addGlossaryTerm) {
                 expandRightBtn.style.display = 'none';
                 popupZh.value = text;
                 popupVi.value = '';
-                if(popupHv) popupHv.value = '';
-                if(popupHvCap) popupHvCap.value = '';
+                updatePopupFields(text);
             }
 
             selectionPopup.classList.remove('hidden');
