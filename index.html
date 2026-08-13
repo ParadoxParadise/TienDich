@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tiên Dịch - Novel Translator</title>
-    <link rel="stylesheet" href="css/style.css?v=11">
+    <meta name="description" content="Tiên Dịch - Ứng dụng dịch truyện Trung Quốc chuyên nghiệp với từ điển VietPhrase, Hán Việt, và nhiều nguồn dịch AI.">
+    <link rel="stylesheet" href="css/style.css?v=12">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -31,6 +32,44 @@
             </div>
         </header>
 
+        <!-- Toolbar: URL input + actions -->
+        <div class="toolbar-bar">
+            <!-- Chapter Navigation -->
+            <button id="nav-prev-btn" class="icon-btn" title="Chương trước" disabled>
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <input type="text" id="fanqie-url" placeholder="Dán link chương từ bất kỳ trang truyện nào (uukanshu, 69shuba, truyenfull...)" class="url-input url-input-main" />
+            <button id="fetch-btn" class="icon-btn primary-btn" title="Tải chương">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Tải
+            </button>
+            <button id="nav-next-btn" class="icon-btn" title="Chương sau" disabled>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <div class="toolbar-sep"></div>
+            <button id="translate-btn" class="primary-btn">
+                <i class="fa-solid fa-language"></i> Dịch
+            </button>
+            <button id="stop-translate-btn" class="icon-btn danger-btn hidden" title="Dừng dịch">
+                <i class="fa-solid fa-stop"></i>
+            </button>
+            <button id="export-txt-btn" class="icon-btn" title="Xuất file TXT">
+                <i class="fa-solid fa-file-arrow-down"></i>
+            </button>
+            <button id="copy-btn" class="icon-btn" title="Copy bản dịch AI">
+                <i class="fa-regular fa-copy"></i>
+            </button>
+            <button id="clear-btn" class="icon-btn" title="Xóa tất cả">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container" id="progress-container">
+            <progress id="translate-progress" value="0" max="100" style="display:none"></progress>
+            <span id="translate-progress-label" class="progress-label"></span>
+            <span id="translate-status" class="translate-status" style="display:none"></span>
+        </div>
+
         <!-- Main Content (Split Screen) -->
         <main class="split-container">
             <!-- Left Column: Source -->
@@ -38,17 +77,11 @@
                 <div class="pane-header">
                     <h2>Bản gốc (Trung)</h2>
                     <div class="actions">
-                        <input type="text" id="fanqie-url" placeholder="Dán link Fanqie, 69shuba, UUkanshu..." class="url-input" />
-                        <button id="fetch-btn" class="icon-btn primary-btn" title="Cào truyện">
-                            <i class="fa-solid fa-cloud-arrow-down"></i>
-                        </button>
-                        <button id="translate-btn" class="primary-btn">
-                            <i class="fa-solid fa-language"></i> Dịch
-                        </button>
+                        <span id="vp-status" class="status-badge loading"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải từ điển...</span>
                     </div>
                 </div>
                 <div class="editor-container">
-                    <div id="source-text" class="translation-output" contenteditable="true" placeholder="Dán văn bản tiếng Trung hoặc link truyện bất kỳ vào ô trên..."></div>
+                    <div id="source-text" class="translation-output" contenteditable="true" placeholder="Dán văn bản tiếng Trung hoặc nhập link truyện ở thanh trên..."></div>
                 </div>
             </section>
 
@@ -56,26 +89,21 @@
             <section class="pane vp-pane">
                 <div class="pane-header">
                     <h2>VietPhrase (Thô)</h2>
-                    <div class="actions">
-                        <span id="vp-status" class="status-badge loading"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải từ điển...</span>
-                    </div>
+                    <div class="actions"></div>
                 </div>
                 <div class="editor-container">
-                    <div id="vp-text" class="translation-output" contenteditable="true" placeholder="Bản dịch thô sẽ tự động hiện ở đây khi có từ điển..."></div>
+                    <div id="vp-text" class="translation-output" contenteditable="true" placeholder="Bản dịch thô VietPhrase sẽ tự động hiện ở đây..."></div>
                 </div>
             </section>
 
-            <!-- Right Column: Translation (AI/API) -->
+            <!-- Right Column: AI/API Translation -->
             <section class="pane target-pane">
                 <div class="pane-header">
-                    <h2>Bản dịch (Mượt)</h2>
-                    <div class="actions">
-                        <button id="copy-btn" class="icon-btn" title="Copy bản dịch"><i class="fa-regular fa-copy"></i></button>
-                        <button id="clear-btn" class="icon-btn" title="Xóa tất cả"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
+                    <h2 id="target-pane-title">Bản dịch (AI/API)</h2>
+                    <div class="actions"></div>
                 </div>
                 <div class="editor-container">
-                    <div id="target-text" class="translation-output" contenteditable="true" placeholder="Kết quả AI/API sẽ hiện ở đây..."></div>
+                    <div id="target-text" class="translation-output" contenteditable="true" placeholder="Kết quả dịch AI/API sẽ streaming ở đây..."></div>
                 </div>
             </section>
         </main>
@@ -91,38 +119,59 @@
             
             <div class="modal-body">
                 <div class="tabs">
-                    <button class="tab-btn active" data-tab="api-settings">Cấu hình API</button>
-                    <button class="tab-btn" data-tab="glossary-settings">Từ Điển (Glossary)</button>
+                    <button class="tab-btn active" data-tab="api-settings">Nguồn Dịch</button>
+                    <button class="tab-btn" data-tab="glossary-settings">Từ Điển</button>
+                    <button class="tab-btn" data-tab="history-settings">Lịch Sử</button>
                 </div>
 
-                <!-- API Settings -->
+                <!-- Translation Source Settings -->
                 <div id="api-settings" class="tab-content active">
                     <div class="form-group">
                         <label for="provider-select">Nguồn dịch:</label>
                         <select id="provider-select">
-                            <option value="gemini">Google Gemini (AI)</option>
-                            <option value="openai">OpenAI (ChatGPT)</option>
-                            <option value="claude">Claude API (Anthropic)</option>
-                            <option value="deepseek">DeepSeek API</option>
-                            <option value="custom_openai">Custom API (Local AI / Sakura LLM)</option>
-                            <option value="google">Google Translate (Free)</option>
-                            <option value="deeplx">DeepLX (Free - Dịch sang Tiếng Anh)</option>
-                            <option value="mymemory">MyMemory / Bing (Free - Giới hạn)</option>
-                            <option value="deepl">DeepL API (Cần Key)</option>
-                            <option value="caiyun">Caiyun (Thái Vân - Cần Key)</option>
-                            <option value="baidu">Baidu (Bá Độ - Cần Key)</option>
-                            <option value="tencent">Tencent (TranSmart - Cần Key)</option>
+                            <optgroup label="🤖 AI / LLM (Chất lượng tốt nhất)">
+                                <option value="gemini">Google Gemini (AI)</option>
+                                <option value="openai">OpenAI ChatGPT</option>
+                                <option value="claude">Claude (Anthropic)</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="custom_openai">Custom / Local AI (Ollama, Sakura LLM...)</option>
+                            </optgroup>
+                            <optgroup label="🆓 Miễn phí (Không cần key)">
+                                <option value="google">Google Translate (Free)</option>
+                                <option value="bing">Microsoft Bing (Free)</option>
+                                <option value="youdao">Youdao 有道 (Free)</option>
+                                <option value="mymemory">MyMemory (Free - Giới hạn)</option>
+                            </optgroup>
+                            <optgroup label="🔑 API Key (Trả phí)">
+                                <option value="baidu">Baidu 百度 (Cần AppID|Secret)</option>
+                                <option value="caiyun">Caiyun 彩云 (Cần Token)</option>
+                                <option value="deepl">DeepL (Cần Key - Dịch sang Anh)</option>
+                            </optgroup>
                         </select>
                     </div>
+
+                    <!-- Gemini model selector -->
+                    <div class="form-group" id="gemini-model-group" style="display:none">
+                        <label for="gemini-model-select">Model Gemini:</label>
+                        <select id="gemini-model-select">
+                            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Nhanh, tốt)</option>
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Tốt nhất)</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ổn định)</option>
+                            <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Rất nhanh)</option>
+                        </select>
+                    </div>
+
                     <div class="form-group hidden" id="api-base-url-group">
-                        <label for="api-base-url">API Base URL (Dành cho Custom/Local API):</label>
+                        <label for="api-base-url">API Base URL (Custom/Local):</label>
                         <input type="text" id="api-base-url" placeholder="VD: http://127.0.0.1:8080/v1">
                     </div>
                     <div class="form-group" id="api-key-group">
                         <label for="api-key">API Key:</label>
                         <input type="password" id="api-key" placeholder="Nhập API Key của bạn...">
-                        <small>API Key được lưu cục bộ trên trình duyệt, không gửi đi đâu khác ngoài server dịch.</small>
+                        <small>API Key được lưu trên máy bạn, không gửi đến đâu khác ngoài server dịch.</small>
                     </div>
+
+                    <div class="provider-info" id="provider-info"></div>
                 </div>
 
                 <!-- Glossary Settings -->
@@ -131,11 +180,18 @@
                         <button id="raw-save-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Lưu lại</button>
                         <button id="raw-run-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Chạy</button>
                         <button id="raw-clear-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Xóa hết</button>
-                        <button id="raw-export-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Tải name</button>
+                        <button id="raw-export-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Tải xuống</button>
                         <button id="raw-import-btn" class="stv-text-btn-sm" style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Upload</button>
                         <input type="file" id="raw-file-input" accept=".txt" style="display: none;">
                     </div>
                     <textarea id="raw-dict-textarea" spellcheck="false" placeholder="Nhập mỗi từ một dòng theo định dạng: TiếngTrung=TiếngViệt&#10;VD: 韩立=Hàn Lập" style="width: 100%; height: 300px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--glass-border); padding: 10px; border-radius: 4px; font-family: monospace; resize: vertical;"></textarea>
+                </div>
+
+                <!-- History Settings -->
+                <div id="history-settings" class="tab-content">
+                    <p style="color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem;">Các chương đã đọc gần đây. Click để mở lại.</p>
+                    <div id="history-list" class="history-list"></div>
+                    <button id="clear-history-btn" class="stv-text-btn-sm" style="margin-top: 10px; background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Xóa lịch sử</button>
                 </div>
             </div>
         </div>
@@ -147,7 +203,7 @@
         <p>Đang luyện đan (dịch)...</p>
     </div>
 
-    <!-- Selection Popup Menu (SangTacViet Clone) -->
+    <!-- Selection Popup Menu -->
     <div id="selection-popup" class="selection-popup hidden stv-theme">
         <div class="stv-header">
             <button id="close-popup" class="stv-icon-btn red"><i class="fa-solid fa-circle-xmark"></i></button>
@@ -198,7 +254,7 @@
         </div>
     </div>
 
-    <!-- Name Modal (SangTacViet Clone) -->
+    <!-- Name Modal -->
     <div id="name-modal" class="modal hidden">
         <div class="modal-content glass-panel" style="max-width: 500px; padding: 0;">
             <div class="modal-header" style="padding: 15px 20px; border-bottom: 1px solid var(--glass-border);">
@@ -262,6 +318,6 @@
     </div>
 
     <script src="https://unpkg.com/pinyin-pro"></script>
-    <script type="module" src="js/main.js?v=11"></script>
+    <script type="module" src="js/main.js?v=12"></script>
 </body>
 </html>

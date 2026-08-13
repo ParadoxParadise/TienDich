@@ -627,9 +627,190 @@ small {
     display: none !important;
 }
 
+/* ============================================
+   TOOLBAR BAR (URL input + actions)
+   ============================================ */
+.toolbar-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 1rem;
+    background: var(--glass-bg);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+}
+
+.url-input-main {
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.06);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    transition: border-color 0.2s;
+}
+.url-input-main:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(255,255,255,0.1);
+}
+.toolbar-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--glass-border);
+    margin: 0 4px;
+}
+
+/* ============================================
+   PROGRESS BAR
+   ============================================ */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 1rem 4px;
+    min-height: 22px;
+}
+#translate-progress {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    appearance: none;
+    background: var(--glass-border);
+    display: none;
+}
+#translate-progress::-webkit-progress-bar {
+    background: var(--glass-border);
+    border-radius: 2px;
+}
+#translate-progress::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--accent-color), #8b5cf6);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+.progress-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.translate-status {
+    font-size: 0.78rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.translate-status.loading { color: var(--accent-color); }
+.translate-status.success { color: #22c55e; }
+.translate-status.error   { color: #ef4444; }
+.translate-status.info    { color: var(--text-secondary); }
+
+/* ============================================
+   DANGER BUTTON (Stop)
+   ============================================ */
+.danger-btn {
+    color: #ef4444 !important;
+}
+.danger-btn:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+}
+
+/* ============================================
+   CHAPTER NAVIGATION
+   ============================================ */
+#nav-prev-btn:disabled,
+#nav-next-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+#nav-prev-btn:disabled:hover,
+#nav-next-btn:disabled:hover {
+    transform: none;
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   HISTORY LIST
+   ============================================ */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 8px;
+}
+.history-item:hover {
+    border-color: var(--accent-color);
+    background: rgba(59, 130, 246, 0.08);
+}
+.history-preview {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+.history-item small {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   PROVIDER INFO
+   ============================================ */
+.provider-info {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.provider-info:empty { display: none; }
+
+/* ============================================
+   OPTGROUP STYLING
+   ============================================ */
+optgroup {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .split-container {
         flex-direction: column;
     }
+    .toolbar-bar {
+        flex-wrap: wrap;
+    }
+    .url-input-main {
+        width: 100%;
+        order: -1;
+    }
 }
+

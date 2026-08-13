@@ -1,181 +1,200 @@
-export default {
-    async translate(text, provider, apiKey, glossary, onChunk, baseUrl) {
-        // Prepare Glossary context
-        let glossaryContext = "";
-        if (glossary && glossary.length > 0) {
-            glossaryContext = "\n\nHãy tuân thủ từ điển danh từ riêng sau:\n" + glossary.map(g => `${g.zh} -> ${g.vi}`).join("\n");
+/**
+ * translator.js - Tiên Dịch Translation Engine
+ * Hỗ trợ nhiều nguồn dịch: AI/LLM + Free + API
+ */
+
+import Scraper from './scraper.js';
+
+const BACKEND = 'http://localhost:8000';
+
+// Chia văn bản thành các đoạn ~2000 ký tự, tôn trọng ranh giới câu/đoạn
+function splitIntoChunks(text, maxLen = 2000) {
+    const chunks = [];
+    const paragraphs = text.split(/\n\n+/);
+    let current = '';
+
+    for (const para of paragraphs) {
+        if ((current + '\n\n' + para).length > maxLen && current) {
+            chunks.push(current.trim());
+            current = para;
+        } else {
+            current = current ? current + '\n\n' + para : para;
         }
+    }
+    if (current.trim()) chunks.push(current.trim());
 
-        const systemPrompt = `Bạn là một dịch giả tiểu thuyết chuyên nghiệp. Nhiệm vụ của bạn là dịch văn bản Tiếng Trung sang Tiếng Việt một cách trôi chảy, đúng văn phong truyện chữ (tiên hiệp, huyền huyễn, ngôn tình, đô thị...). 
-LƯU Ý QUAN TRỌNG: Đây là tác phẩm tiểu thuyết hư cấu. Bạn PHẢI dịch sát nghĩa và đầy đủ toàn bộ nội dung gốc, bao gồm cả các yếu tố nhạy cảm, bạo lực hoặc 18+ (nếu có) mà KHÔNG ĐƯỢC phép kiểm duyệt (censor) hay từ chối dịch. Hãy giữ nguyên tông giọng của tác giả.${glossaryContext}`;
-
-        // Split text if too long (simple chunking by double newline)
-        // For simplicity in this demo, we'll just process it all at once if AI, or split for Google
-        
-        switch (provider) {
-            case 'google':
-                await this.translateGoogle(text, onChunk);
-                break;
-            case 'openai':
-                await this.translateOpenAI(text, apiKey, systemPrompt, onChunk, 'https://api.openai.com/v1/chat/completions', 'gpt-4o-mini');
-                break;
-            case 'deepseek':
-                await this.translateOpenAI(text, apiKey, systemPrompt, onChunk, 'https://api.deepseek.com/chat/completions', 'deepseek-chat');
-                break;
-            case 'custom_openai':
-                await this.translateOpenAI(text, apiKey || "dummy-key", systemPrompt, onChunk, baseUrl.replace(/\/$/, '') + '/chat/completions', '');
-                break;
-            case 'claude':
-                await this.translateClaude(text, apiKey, systemPrompt, onChunk);
-                break;
-            case 'gemini':
-                await this.translateGemini(text, apiKey, systemPrompt, onChunk);
-                break;
-            case 'deeplx':
-                await this.translateDeepLX(text, onChunk);
-                break;
-            case 'mymemory':
-                await this.translateMyMemory(text, onChunk);
-                break;
-            case 'deepl':
-                await this.translateDeepL(text, apiKey, onChunk);
-                break;
-            case 'caiyun':
-                await this.translateCaiyun(text, apiKey, onChunk);
-                break;
-            case 'baidu':
-                await this.translateBaidu(text, apiKey, onChunk);
-                break;
-            case 'tencent':
-                onChunk("Tencent API đang được nâng cấp, vui lòng dùng API khác.");
-                break;
-            default:
-                throw new Error("Nhà cung cấp không hợp lệ");
-        }
-    },
-
-    async translateCaiyun(text, apiKey, onChunk) {
-        // Sử dụng CORS Proxy để gọi API Caiyun từ trình duyệt
-        const proxyUrl = "https://api.allorigins.win/raw?url=";
-        const apiUrl = encodeURIComponent("https://api.interpreter.caiyunai.com/v1/translator");
-        
-        const response = await fetch(proxyUrl + apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': `token ${apiKey}`
-            },
-            body: JSON.stringify({
-                source: [text],
-                trans_type: "zh2vi",
-                request_id: "demo",
-                detect: true
-            })
-        });
-        if (!response.ok) throw new Error("Lỗi kết nối Caiyun API");
-        const data = await response.json();
-        onChunk(data.target[0]);
-    },
-
-    async translateBaidu(text, apiKey, onChunk) {
-        // Baidu API key thường gồm AppID|AppSecret
-        const parts = apiKey.split('|');
-        if(parts.length !== 2) throw new Error("Vui lòng nhập API Key Baidu theo định dạng AppID|AppSecret");
-        onChunk("Baidu API yêu cầu thuật toán MD5 (chưa được tích hợp đầy đủ thư viện crypto trong phiên bản web tĩnh này). Vui lòng dùng Gemini hoặc OpenAI để có chất lượng tốt nhất.");
-    },
-
-    async translateGoogle(text, onChunk) {
-        // Free Google Translate API (gtx)
-        // Chia nhỏ text thông minh theo câu để tránh lỗi 414 URI Too Long (Giới hạn ~2000 ký tự)
-        const maxChunkLength = 600; // Mỗi tiếng Trung = 3 bytes url encode, 600 chữ = 1800 bytes an toàn
-        let chunks = [];
-        let currentChunk = "";
-        
-        // Tách theo dấu xuống dòng và dấu câu để không đứt đoạn giữa câu
-        const sentences = text.split(/([。\n！？.!?])/); 
-        
-        for (let i = 0; i < sentences.length; i++) {
-            currentChunk += sentences[i];
-            // Nếu đủ dài, hoặc là đoạn cuối
-            if (currentChunk.length >= maxChunkLength || i === sentences.length - 1) {
-                if (currentChunk.trim()) {
-                    chunks.push(currentChunk);
-                } else if (currentChunk.includes('\n')) {
-                    chunks.push('\n\n'); // Giữ lại cấu trúc đoạn
+    // Nếu vẫn có chunk quá dài, chia tiếp theo câu
+    const result = [];
+    for (const chunk of chunks) {
+        if (chunk.length <= maxLen) {
+            result.push(chunk);
+        } else {
+            const sentences = chunk.split(/([。！？.!?\n])/);
+            let buf = '';
+            for (let i = 0; i < sentences.length; i++) {
+                buf += sentences[i];
+                if (buf.length >= maxLen) {
+                    result.push(buf.trim());
+                    buf = '';
                 }
-                currentChunk = "";
             }
+            if (buf.trim()) result.push(buf.trim());
         }
+    }
+    return result.filter(c => c.trim());
+}
 
-        for (let chunk of chunks) {
-            if (chunk === '\n\n') {
-                onChunk('\n\n');
-                continue;
-            }
-            
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=vi&dt=t&q=${encodeURIComponent(chunk)}`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`Lỗi Google Translate (Mã lỗi: ${res.status}). Có thể bạn đang gửi quá nhanh.`);
-            const data = await res.json();
-            
-            let translated = "";
-            if (data[0]) {
-                data[0].forEach(item => {
-                    if (item[0]) translated += item[0];
-                });
-            }
-            onChunk(translated);
+function buildSystemPrompt(glossary) {
+    let glossaryContext = '';
+    if (glossary && glossary.length > 0) {
+        glossaryContext = '\n\nTừ điển tên riêng - PHẢI tuân thủ:\n' + glossary.map(g => `${g.zh} → ${g.vi}`).join('\n');
+    }
+    return `Bạn là dịch giả tiểu thuyết chuyên nghiệp, chuyên dịch truyện Trung Quốc (tiên hiệp, huyền huyễn, đô thị, ngôn tình) sang Tiếng Việt. 
+Yêu cầu:
+- Dịch TOÀN BỘ nội dung, không bỏ qua bất kỳ đoạn nào
+- Giữ văn phong của tác giả (mạnh mẽ, uy nghiêm với tiên hiệp; ngọt ngào với ngôn tình...)
+- Xưng hô: "Ta", "Ngươi", "Hắn/Nàng" (không dùng "tôi", "bạn", "anh/chị" bình thường)
+- Giữ nguyên tên địa danh, môn phái nếu đã có trong từ điển
+- KHÔNG thêm chú thích hay giải thích thêm vào bản dịch
+- Trả về ĐÚNG bản dịch, KHÔNG có lời mở đầu hay kết thúc${glossaryContext}`;
+}
+
+export default {
+    _abortController: null,
+
+    abort() {
+        if (this._abortController) {
+            this._abortController.abort();
+            this._abortController = null;
         }
     },
 
-    async translateOpenAI(text, apiKey, systemPrompt, onChunk, url, model) {
-        let bodyPayload = {
+    async translate(text, provider, apiKey, glossary, onChunk, baseUrl, onProgress) {
+        this._abortController = new AbortController();
+        const signal = this._abortController.signal;
+        const systemPrompt = buildSystemPrompt(glossary);
+
+        const FREE_PROVIDERS = ['google', 'bing', 'youdao'];
+        const BACKEND_PROVIDERS = ['bing', 'youdao', 'baidu', 'caiyun'];
+        const CHUNKED_PROVIDERS = ['google', 'bing', 'youdao', 'baidu', 'caiyun', 'deepl'];
+
+        // Providers dùng chunked translation (không phải LLM stream)
+        if (CHUNKED_PROVIDERS.includes(provider)) {
+            const chunks = splitIntoChunks(text, provider === 'google' ? 600 : 2000);
+            for (let i = 0; i < chunks.length; i++) {
+                if (signal.aborted) break;
+                if (onProgress) onProgress(i + 1, chunks.length);
+                let result = '';
+                if (BACKEND_PROVIDERS.includes(provider)) {
+                    result = await Scraper.translateViaBackend(provider, chunks[i], apiKey);
+                } else if (provider === 'google') {
+                    result = await this._googleChunk(chunks[i], signal);
+                } else if (provider === 'deepl') {
+                    result = await this._deepl(chunks[i], apiKey);
+                }
+                onChunk(result + (i < chunks.length - 1 ? '\n\n' : ''));
+            }
+            return;
+        }
+
+        // LLM providers — chunked với stream
+        const chunks = splitIntoChunks(text, 3000);
+        for (let i = 0; i < chunks.length; i++) {
+            if (signal.aborted) break;
+            if (onProgress) onProgress(i + 1, chunks.length);
+
+            switch (provider) {
+                case 'openai':
+                    await this._openAI(chunks[i], apiKey, systemPrompt, onChunk, 'https://api.openai.com/v1/chat/completions', 'gpt-4o-mini', signal);
+                    break;
+                case 'deepseek':
+                    await this._openAI(chunks[i], apiKey, systemPrompt, onChunk, 'https://api.deepseek.com/chat/completions', 'deepseek-chat', signal);
+                    break;
+                case 'custom_openai':
+                    await this._openAI(chunks[i], apiKey || 'dummy-key', systemPrompt, onChunk, (baseUrl || '').replace(/\/$/, '') + '/chat/completions', '', signal);
+                    break;
+                case 'claude':
+                    await this._claude(chunks[i], apiKey, systemPrompt, onChunk, signal);
+                    break;
+                case 'gemini':
+                    await this._gemini(chunks[i], apiKey, systemPrompt, onChunk, signal, baseUrl);
+                    break;
+                case 'mymemory':
+                    await this._myMemory(chunks[i], onChunk, signal);
+                    break;
+                default:
+                    throw new Error(`Nguồn dịch "${provider}" không được hỗ trợ`);
+            }
+            // Thêm dòng trắng giữa các chunk
+            if (i < chunks.length - 1) onChunk('\n\n');
+        }
+    },
+
+    async _googleChunk(text, signal) {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=vi&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url, { signal: signal || undefined });
+        if (!res.ok) throw new Error(`Lỗi Google Translate (${res.status}). Có thể bạn đang gửi quá nhanh.`);
+        const data = await res.json();
+        return data[0]?.map(item => item[0] || '').join('') || '';
+    },
+
+    // Compat: vẫn hỗ trợ gọi translateGoogle cũ
+    async translateGoogle(text, onChunk) {
+        const chunks = splitIntoChunks(text, 600);
+        for (const chunk of chunks) {
+            const result = await this._googleChunk(chunk, null);
+            onChunk(result);
+        }
+    },
+
+    async _openAI(text, apiKey, systemPrompt, onChunk, url, model, signal) {
+        const bodyPayload = {
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: text }
             ],
             stream: true,
-            temperature: 0.3
+            temperature: 0.3,
+            max_tokens: 8192
         };
         if (model) bodyPayload.model = model;
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(bodyPayload)
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify(bodyPayload),
+            signal
         });
 
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || "Lỗi API OpenAI");
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error?.message || `Lỗi OpenAI API (${response.status})`);
         }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buf = '';
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+            buf += decoder.decode(value, { stream: true });
+            const lines = buf.split('\n');
+            buf = lines.pop();
             for (const line of lines) {
-                const data = line.replace('data: ', '');
+                if (!line.startsWith('data: ')) continue;
+                const data = line.slice(6);
                 if (data === '[DONE]') continue;
                 try {
                     const parsed = JSON.parse(data);
-                    if (parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-                        onChunk(parsed.choices[0].delta.content);
-                    }
-                } catch (e) {}
+                    const content = parsed.choices?.[0]?.delta?.content;
+                    if (content) onChunk(content);
+                } catch {}
             }
         }
     },
 
-    async translateClaude(text, apiKey, systemPrompt, onChunk) {
-        const url = "https://api.anthropic.com/v1/messages";
-        const response = await fetch(url, {
+    async _claude(text, apiKey, systemPrompt, onChunk, signal) {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -184,172 +203,129 @@ LƯU Ý QUAN TRỌNG: Đây là tác phẩm tiểu thuyết hư cấu. Bạn PH�
                 'anthropic-dangerously-allow-browser': 'true'
             },
             body: JSON.stringify({
-                model: 'claude-3-5-sonnet-20240620',
-                max_tokens: 4096,
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 8192,
                 system: systemPrompt,
                 messages: [{ role: 'user', content: text }],
                 stream: true,
                 temperature: 0.3
-            })
+            }),
+            signal
         });
 
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || "Lỗi API Claude");
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error?.message || `Lỗi Claude API (${response.status})`);
         }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buf = '';
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+            buf += decoder.decode(value, { stream: true });
+            const lines = buf.split('\n');
+            buf = lines.pop();
             for (const line of lines) {
-                const data = line.replace('data: ', '');
+                if (!line.startsWith('data: ')) continue;
                 try {
-                    const parsed = JSON.parse(data);
-                    if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
+                    const parsed = JSON.parse(line.slice(6));
+                    if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                         onChunk(parsed.delta.text);
                     }
-                } catch (e) {}
+                } catch {}
             }
         }
     },
 
-    async translateGemini(text, apiKey, systemPrompt, onChunk) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${apiKey}`;
-        
+    async _gemini(text, apiKey, systemPrompt, onChunk, signal, modelOverride) {
+        // Hỗ trợ nhiều model Gemini
+        const model = modelOverride || 'gemini-2.0-flash';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${apiKey}&alt=sse`;
+
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-                contents: [{
-                    parts: [{ text: text }]
-                }],
-                generationConfig: {
-                    temperature: 0.3
-                },
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{ parts: [{ text }] }],
+                generationConfig: { temperature: 0.3, maxOutputTokens: 8192 },
                 safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
                 ]
-            })
+            }),
+            signal
         });
 
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || "Lỗi API Gemini");
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error?.message || `Lỗi Gemini API (${response.status})`);
         }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = "";
-
+        let buf = '';
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            
-            // Lấy các cục JSON từ mảng SSE
-            try {
-                // Rất thô sơ để xử lý JSON mảng của Gemini Streaming
-                // Trong thực tế cần dùng thư viện xử lý SSE chuẩn hơn
-                let parts = buffer.split('}\n,\r\n{\n');
-                // Chỗ này phức tạp vì Gemini stream trả về dạng mảng JSON
-                // Thay vì thế ta quét text
-                const textMatches = [...buffer.matchAll(/"text":\s*"([^"]*)"/g)];
-                if (textMatches.length > 0) {
-                    // Để tránh lặp, ta chỉ parse khi xong
-                }
-            } catch(e) {}
-        }
-        
-        // Cách đơn giản nhất cho trình duyệt: không stream thực sự mà đợi xong
-        // vì parse mảng stream của gemini hơi cực.
-        // Để làm đúng stream, ta sẽ bóc 'text'. 
-        // Nhưng tạm thời parse cả chuỗi JSON mảng:
-        try {
-            // Remove starting '[' and ending ']' if it exists, or just wait till end
-            let fullText = "";
-            const jsonArray = JSON.parse(buffer);
-            jsonArray.forEach(chunk => {
-                if (chunk.candidates && chunk.candidates[0].content) {
-                    fullText += chunk.candidates[0].content.parts[0].text;
-                }
-            });
-            onChunk(fullText);
-        } catch(e) {
-            // Fallback if parsing fails
-            try {
-                const textMatches = [...buffer.matchAll(/"text":\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g)];
-                let res = "";
-                textMatches.forEach(m => {
-                    res += JSON.parse(`"${m[1]}"`);
-                });
-                if(res) onChunk(res);
-            } catch(ex) {}
+            buf += decoder.decode(value, { stream: true });
+            const lines = buf.split('\n');
+            buf = lines.pop();
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                try {
+                    const parsed = JSON.parse(line.slice(6));
+                    const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) onChunk(text);
+                } catch {}
+            }
         }
     },
 
-    async translateDeepL(text, apiKey, onChunk) {
+    async _deepl(text, apiKey) {
         const isFree = apiKey.endsWith(':fx');
         const url = isFree ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
-        
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Authorization': `DeepL-Auth-Key ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text: [text],
-                source_lang: 'ZH',
-                target_lang: 'EN-US' // DeepL doesn't support VI natively well. Wait, DeepL does NOT support Vietnamese yet.
-            })
+            headers: { 'Authorization': `DeepL-Auth-Key ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: [text], source_lang: 'ZH', target_lang: 'EN-US' })
         });
-
-        if (!response.ok) throw new Error("Lỗi API DeepL (DeepL hiện chưa hỗ trợ trực tiếp Tiếng Việt)");
-        
+        if (!response.ok) throw new Error('Lỗi DeepL API (DeepL chưa hỗ trợ Tiếng Việt, dịch sang Anh)');
         const data = await response.json();
-        onChunk(data.translations[0].text + "\n\n(Lưu ý: DeepL chưa hỗ trợ Tiếng Việt, đây là bản dịch Tiếng Anh)");
+        return data.translations[0].text + '\n[DeepL: Dịch sang Tiếng Anh vì DeepL chưa hỗ trợ Tiếng Việt]';
     },
 
-    async translateDeepLX(text, onChunk) {
-        const url = 'https://api.deeplx.org/translate';
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text: text,
-                source_lang: 'ZH',
-                target_lang: 'EN' // DeepL doesn't support VI
-            })
-        });
-
-        if (!response.ok) throw new Error("Lỗi API DeepLX (Có thể do quá tải server public)");
-        
-        const data = await response.json();
-        onChunk(data.data + "\n\n(Lưu ý: API này dịch sang Tiếng Anh vì DeepL chưa hỗ trợ Tiếng Việt)");
-    },
-
-    async translateMyMemory(text, onChunk) {
-        // MyMemory has a 500 chars limit per request
-        if (text.length > 500) {
-            onChunk("MyMemory/Bing chỉ hỗ trợ dịch tối đa 500 ký tự mỗi lần miễn phí. Hãy chia nhỏ văn bản.");
-            return;
+    async _myMemory(text, onChunk, signal) {
+        const chunks = splitIntoChunks(text, 450);
+        for (const chunk of chunks) {
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=zh-CN|vi`;
+            const res = await fetch(url, { signal });
+            if (!res.ok) throw new Error('Lỗi MyMemory API');
+            const data = await res.json();
+            onChunk(data.responseData.translatedText + '\n');
+            await new Promise(r => setTimeout(r, 200));
         }
-        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=zh-CN|vi`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Lỗi API MyMemory (Bing Free)");
-        const data = await res.json();
-        onChunk(data.responseData.translatedText);
+    },
+
+    // --- Compat với code cũ ---
+    async translateOpenAI(text, apiKey, systemPrompt, onChunk, url, model) {
+        return this._openAI(text, apiKey, systemPrompt, onChunk, url, model, null);
+    },
+    async translateClaude(text, apiKey, systemPrompt, onChunk) {
+        return this._claude(text, apiKey, systemPrompt, onChunk, null);
+    },
+    async translateGemini(text, apiKey, systemPrompt, onChunk) {
+        return this._gemini(text, apiKey, systemPrompt, onChunk, null);
+    },
+    async translateDeepL(text, apiKey, onChunk) {
+        const r = await this._deepl(text, apiKey);
+        onChunk(r);
+    },
+    async translateMyMemory(text, onChunk) {
+        return this._myMemory(text, onChunk, null);
     }
 };
