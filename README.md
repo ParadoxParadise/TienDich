@@ -3,9 +3,9 @@
   
   # Tiên Dịch (Web Translator)
   
-  **Tiên Dịch** là một ứng dụng dịch thuật truyện chữ Trung Quốc chuyên nghiệp, kết hợp giữa sức mạnh của từ điển VietPhrase truyền thống và công nghệ Trí Tuệ Nhân Tạo (AI) hiện đại.
+  **Tiên Dịch** là một ứng dụng dịch thuật truyện chữ Trung Quốc chuyên nghiệp. Công cụ mang đến tốc độ và chất lượng dịch mượt mà thông qua bộ từ điển VietPhrase đồ sộ kết hợp cùng các nền tảng dịch thuật đám mây mạnh mẽ.
   
-  Hệ thống được thiết kế tối ưu với giao diện trực quan, hỗ trợ dịch tự động toàn bộ chương truyện từ web hoặc văn bản thô.
+  Hệ thống được thiết kế tối ưu với giao diện trực quan, hỗ trợ lấy toàn bộ chương truyện từ web hoặc văn bản thô để dịch một cách hoàn toàn tự động.
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
   [![Made with JS & Python](https://img.shields.io/badge/Made_with-JS_%26_Python-f7df1e.svg?style=flat)]()
@@ -15,17 +15,17 @@
 
 ## 🌟 Tính Năng Nổi Bật
 
-- 🚀 **Cào Truyện Thông Minh:** Chỉ cần dán link truyện (uukanshu, 69shuba, truyenfull, fanqie, v.v.), ứng dụng tự động bóc tách nội dung chương bỏ qua quảng cáo, với điều hướng chương trước/sau tiện lợi.
+- 🚀 **Tự Động Bắt Link Truyện:** Chỉ cần dán link truyện (uukanshu, 69shuba, truyenfull, fanqie, v.v.), ứng dụng sẽ tự động bóc tách đúng nội dung chương, bỏ qua toàn bộ quảng cáo, đồng thời nhận diện nút điều hướng chương trước/sau cực kỳ tiện lợi.
 - 🧠 **Bộ Não Dịch Thuật Đa Tầng:**
-  1. **VietPhrase Engine:** Dịch thô siêu tốc với 7 lớp từ điển (Luật Nhân, Names, Pronouns, Vietphrase, HanViet...). Hỗ trợ popup tra cứu chéo (Thiều Chửu, Lạc Việt).
-  2. **AI & Cloud Engines:** Tích hợp đa dạng nguồn dịch mượt:
-     - **AI/LLMs:** Google Gemini (1.5, 2.0, 2.5), OpenAI ChatGPT, Claude, DeepSeek, và cả Local AI (Sakura LLM, Ollama).
-     - **Miễn Phí:** Google Translate, Microsoft Bing, Youdao, MyMemory.
-     - **Trả Phí/Token:** Baidu, Caiyun, DeepL.
-- ⚡ **Chunking & Streaming:** Hiển thị kết quả dịch theo thời gian thực (streaming) với các mô hình AI. Hỗ trợ chia nhỏ văn bản tự động để vượt qua giới hạn độ dài của các API miễn phí.
-- 🎨 **Giao Diện Trực Quan:** Thiết kế **Dark Mode / Light Mode** sang trọng. Đồng bộ hóa thanh cuộn và highlight giữa bản Gốc - VietPhrase - AI.
-- 🛠️ **Quản Lý Từ Điển Tiện Dụng:** Bôi đen thêm tên nhanh (`Ctrl + E`), lưu lịch sử đọc, và quản lý kho từ điển cá nhân đồng bộ thời gian thực.
-- 📥 **Xuất File:** Dễ dàng xuất kết quả dịch ra file TXT để lưu trữ hoặc đọc trên các thiết bị khác.
+  1. **VietPhrase Engine:** Dịch thô siêu tốc với 7 lớp từ điển (Luật Nhân, Names, Pronouns, Vietphrase, HanViet...). Hỗ trợ popup tra cứu chéo (Thiều Chửu, Lạc Việt) ngay trên văn bản.
+  2. **Hệ Thống Dịch Đa Nguồn:** Tích hợp sẵn nhiều máy chủ dịch thuật nổi tiếng:
+     - **Nguồn Miễn Phí:** Google Translate, Microsoft Bing, Youdao, MyMemory.
+     - **Nguồn Nâng Cao (Token/VIP):** Baidu, Caiyun, DeepL.
+     - **Hỗ trợ Custom API:** Cho phép bạn tự do cấu hình kết nối tới bất kỳ máy chủ dịch nội bộ hoặc dịch vụ bên thứ ba nào mà bạn muốn (ví dụ: máy chủ Sakura, dịch vụ đám mây tư nhân...).
+- ⚡ **Tối Ưu Tốc Độ (Chunking & Streaming):** Hiển thị kết quả dịch theo thời gian thực (streaming) ngay khi đang tải. Ứng dụng tự động chia nhỏ các đoạn văn bản dài (chunking) để không bao giờ bị nghẽn mạng hay vượt quá giới hạn của các máy chủ miễn phí.
+- 🎨 **Giao Diện Trực Quan:** Thiết kế **Dark Mode / Light Mode** sang trọng, hiện đại. Tự động đồng bộ hóa thanh cuộn và bôi màu highlight đoạn đang đọc giữa Bản Gốc - Bản VietPhrase - Bản Dịch Hoàn Chỉnh.
+- 🛠️ **Quản Lý Từ Điển Tiện Dụng:** Bôi đen tên nhân vật mới (`Ctrl + E`) để nạp ngay vào từ điển. Lưu lịch sử đọc truyện để tiện theo dõi, mọi tùy chỉnh cá nhân đều được lưu giữ đồng bộ.
+- 📥 **Xuất File Nhanh Chóng:** Hỗ trợ xuất ngay toàn bộ kết quả dịch thành file văn bản TXT để bạn lưu trữ hoặc chép vào điện thoại, máy đọc sách.
 
 ---
 
@@ -34,12 +34,12 @@
 ### 1. Yêu Cầu Hệ Thống
 - Máy tính cài đặt sẵn **Python 3.8** trở lên.
 
-### 2. Khởi Động (Windows)
-1. Tải hoặc Clone toàn bộ source code này về máy.
+### 2. Khởi Động (Dành cho Windows)
+1. Tải toàn bộ mã nguồn này về máy tính của bạn.
 2. Click đúp vào file `run_web.bat`.
-3. Hệ thống sẽ tự động cài đặt các thư viện cần thiết (Flask, BeautifulSoup...) và mở trình duyệt tại địa chỉ `http://localhost:8000`.
+3. Quá trình thiết lập diễn ra hoàn toàn tự động, ứng dụng sẽ tự mở trình duyệt web tại địa chỉ `http://localhost:8000` và sẵn sàng sử dụng!
 
-*Lưu ý: Không nên mở trực tiếp file `index.html` bằng trình duyệt để tránh bị lỗi bảo mật CORS khi gọi API ngoài và đọc file từ điển cục bộ.*
+*Lưu ý: Bạn bắt buộc phải chạy qua file `.bat` để công cụ có thể tự do lấy dữ liệu từ các trang web (vượt rào cản CORS) và đọc từ điển từ ổ cứng. Không click đúp trực tiếp vào file HTML.*
 
 ---
 
@@ -47,21 +47,21 @@
 
 ```
 TienDich/
-├── server.py         # Flask Backend Proxy (bypass CORS, cào truyện)
-├── run_web.bat       # Script khởi động tự động trên Windows
+├── server.py         # Backend Proxy nội bộ (Vượt lỗi CORS, bóc tách truyện)
+├── run_web.bat       # Mã script khởi động nhanh cho Windows
 ├── index.html        # Giao diện chính của ứng dụng
-├── css/              # Giao diện (.css)
-├── js/               # Mã nguồn Frontend (Engine, Scraper, Translator, UI)
-└── data/             # Nơi chứa kho tàng từ điển VietPhrase
+├── css/              # Chứa các bộ định dạng giao diện (.css)
+├── js/               # Mã nguồn xử lý lõi (Dịch thuật, lấy nội dung web, sự kiện)
+└── data/             # Nơi chứa kho tàng các tập tin từ điển VietPhrase
 ```
 
 ---
 
-## 📝 Quản Lý Từ Điển
+## 📝 Nâng Cấp Từ Điển
 
-Hệ thống cho phép bạn tùy ý nâng cấp bộ từ điển bằng cách tải lên các file từ điển chuẩn và thay thế vào thư mục `data/`. Hệ thống sẽ tự động nhận diện và cập nhật!
+Hệ thống cho phép bạn tùy ý nâng cấp và làm phong phú thêm bộ từ điển của mình bằng cách tải các file từ điển chuẩn về và chép đè vào thư mục `data/`. Phần mềm sẽ tự động nhận diện dữ liệu mới!
 
-Nếu bạn có từ điển cá nhân, bạn có thể nạp trực tiếp danh sách từ của mình thông qua tab **Cài đặt** ngay trong ứng dụng, hoặc dùng popup để bôi đen - thêm mới.
+Nếu bạn có danh sách tên nhân vật hoặc từ ngữ riêng, bạn có thể dễ dàng dán danh sách đó vào mục **Cài đặt** trên ứng dụng, hoặc dùng tính năng bôi đen trên văn bản để bổ sung từng từ một cách nhanh chóng.
 
 ---
-*Chúc bạn có những giờ phút đọc truyện và dịch truyện tuyệt vời!* 🍵
+*Chúc bạn có những giờ phút đọc và chuyển ngữ truyện thật thư giãn!* 🍵
