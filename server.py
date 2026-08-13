@@ -285,10 +285,17 @@ def translate_bing():
                              timeout=15)
         resp.raise_for_status()
         result = resp.json()
-        translated = result[0]['translations'][0]['text']
-        return jsonify({'result': translated})
+        
+        if isinstance(result, list) and len(result) > 0 and 'translations' in result[0]:
+            translated = result[0]['translations'][0]['text']
+            return jsonify({'result': translated})
+        else:
+            return jsonify({'error': f'Bing API trả về lỗi: {json.dumps(result, ensure_ascii=False)}'}), 502
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_msg = str(e)
+        if not error_msg or error_msg == "0":
+            error_msg = "Lỗi không xác định khi gọi Bing (có thể IP bị chặn hoặc token hết hạn)"
+        return jsonify({'error': error_msg}), 500
 
 # ============================================================
 # API: /api/translate/youdao — Youdao Free (web scrape)
