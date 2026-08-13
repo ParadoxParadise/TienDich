@@ -152,15 +152,29 @@ export default {
 
     // Proxy dịch qua backend (cho Bing, Youdao, Baidu)
     async translateViaBackend(engine, text, apiKey = '') {
-        const resp = await fetch(`${TRANSLATE_API}/${engine}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, apiKey }),
-            signal: AbortSignal.timeout(30000)
-        });
-        const data = await resp.json();
-        if (!resp.ok || data.error) throw new Error(data.error || 'Lỗi dịch thuật qua backend');
-        return data.result;
+        try {
+            const resp = await fetch(`${TRANSLATE_API}/${engine}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, apiKey }),
+                signal: AbortSignal.timeout(30000)
+            });
+            
+            // Xử lý nếu backend không chạy (trả về HTML 404 của live-server/http.server)
+            const contentType = resp.headers.get("content-type");
+            if (contentType && contentType.includes("text/html")) {
+                throw new Error("Lỗi: Không tìm thấy Backend. Vui lòng chạy ứng dụng thông qua file run_web.bat để sử dụng tính năng này!");
+            }
+
+            const data = await resp.json();
+            if (!resp.ok || data.error) throw new Error(data.error || 'Lỗi dịch thuật qua backend');
+            return data.result;
+        } catch (e) {
+            if (e.name === 'SyntaxError' || e.message.includes('JSON')) {
+                throw new Error("Vui lòng chạy ứng dụng thông qua file run_web.bat để sử dụng tính năng này!");
+            }
+            throw e;
+        }
     },
 
     async fetchFanqie(url) {
